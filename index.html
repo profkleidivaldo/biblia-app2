@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#242424">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bíblia">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Bíblia Sagrada — Leitura</title>
+<script>
+/* Aplica o tema salvo antes de desenhar a página (evita piscar claro/escuro). */
+(function(){
+  var t=null;
+  try{t=JSON.parse(localStorage.getItem("biblia_tema_v1"));}catch(e){}
+  if(t!=="dark"&&t!=="light"){
+    try{t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}catch(e){t="light";}
+  }
+  document.documentElement.setAttribute("data-theme",t);
+})();
+</script>
+<link rel="stylesheet" href="recursos.css">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f5f6f7;--surface:#fff;--ink:#1d2730;--muted:#707b84;
+  --line:#e2e6e9;--accent:#079fd0;--accent-soft:#e9f8fd;--accent-line:#8fd6ea;
+  --soft:#eef2f4;--soft-ink:#34414b;--chip-on:#252525;
+  --hl:#fff0a8;--hl-ink:inherit;
+  --ok:#2e9e5b;--ok-soft:#e3f5ea;--ok-text:#3f7d12;
+  --err-bg:#fff1ef;--err-line:#f1c9c2;--err-ink:#8e3c32;
+  --grid:#273038;
+  --shadow:0 5px 18px rgba(20,30,40,.07);--radius:16px;
+  --verse-size:18px;
+  --font-bible:Georgia,"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua","Times New Roman",serif;
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#12161a;--surface:#1b2126;--ink:#e7ebee;--muted:#9aa6ae;
+  --line:#2d363d;--accent:#079fd0;--accent-soft:#12303a;--accent-line:#1c6d86;
+  --soft:#262e34;--soft-ink:#d6dde2;--chip-on:#3b464e;
+  --hl:#7d6a14;--hl-ink:#fff8dc;
+  --ok:#2f9e5f;--ok-soft:#173a27;--ok-text:#8fd16a;
+  --err-bg:#3a1f1c;--err-line:#6b3a33;--err-ink:#f1b8ae;
+  --grid:#0c0f11;
+  --shadow:0 5px 18px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif;line-height:1.5}
+button,input{font:inherit}
+button{border:0;color:inherit}
+.app-header{position:sticky;top:0;z-index:50;background:#252525;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.header-inner{max-width:1080px;margin:auto;min-height:56px;padding:7px 12px;display:flex;align-items:center;gap:8px}
+.brand{font-size:17px;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header-btn{width:42px;height:42px;border-radius:10px;background:transparent;color:#fff;cursor:pointer;font-size:20px;display:inline-flex;align-items:center;justify-content:center}
+.header-btn:hover{background:rgba(255,255,255,.1)}
+.theme-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.theme-btn .i-sun{display:none}
+:root[data-theme="dark"] .theme-btn .i-sun{display:block}
+:root[data-theme="dark"] .theme-btn .i-moon{display:none}
+.container{max-width:1280px;margin:auto;padding:10px 10px 30px}
+.view{display:none}.view.active{display:block}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.back{width:42px;height:42px;border-radius:12px;background:var(--surface);border:1px solid var(--line);cursor:pointer;color:var(--soft-ink);font-size:22px}
+.title{margin:0;font-size:24px;line-height:1.2}
+.subtitle{margin:4px 0 0;color:var(--muted);font-size:13px}
+
+/* progresso geral */
+.progress-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 16px;box-shadow:var(--shadow)}
+.progress-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px}
+.progress-top strong{font-size:14px}
+.progress-pct{font-weight:800;color:var(--ok-text);font-size:15px}
+.progress-bar{height:10px;border-radius:999px;background:var(--soft);overflow:hidden;margin:8px 0 6px}
+.progress-fill{height:100%;width:0;border-radius:999px;background:var(--ok);transition:width .35s ease}
+.progress-sub{font-size:12px;color:var(--muted)}
+
+.search-wrap{position:relative;margin:4px 0 18px}
+.search-wrap input{width:100%;height:50px;padding:0 46px 0 16px;border:1px solid var(--line);border-radius:15px;background:var(--surface);color:var(--ink);outline:none;box-shadow:var(--shadow)}
+.search-wrap input::placeholder{color:var(--muted)}
+.search-wrap input:focus{border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
+.search-icon{position:absolute;right:12px;top:4px;width:42px;height:42px;background:transparent;color:var(--muted);font-size:20px;pointer-events:none}
+.search-info{font-size:12px;color:var(--muted);margin:-8px 0 10px}
+.search-mode{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 10px}
+.search-mode button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 10px;font-size:11px;font-weight:700;color:var(--soft-ink);cursor:pointer}
+.search-mode button.active{background:var(--chip-on);color:#fff;border-color:var(--chip-on)}
+.global-status{font-size:12px;color:var(--muted);margin:6px 0 10px}
+.result-actions{display:flex;gap:6px;margin-top:8px}
+.result-actions button{border:1px solid var(--line);background:var(--soft);color:var(--soft-ink);border-radius:8px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer}
+.result-actions button:hover{background:var(--accent-soft)}
+.book-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;background:var(--grid);border:1px solid var(--grid);border-radius:6px;overflow:hidden;box-shadow:var(--shadow)}
+.book{position:relative;min-height:92px;padding:11px 11px 12px;color:#fff;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;cursor:pointer}
+.book .abbr{font-size:29px;font-weight:700;line-height:1}
+.book.done .abbr::after{content:" ✓";font-size:.5em;vertical-align:middle}
+.book .name{font-size:11px;font-weight:700;align-self:flex-end}
+.book-bar{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(0,0,0,.25)}
+.book-bar i{display:block;height:100%;background:rgba(255,255,255,.92)}
+.book:hover{filter:brightness(1.05)}
+.book[data-section="pentateuco"]{background:#099ed0}
+.book[data-section="historicos"]{background:#83b600}
+.book[data-section="poeticos"]{background:#7654b8}
+.book[data-section="profetas"]{background:#d68129}
+.book[data-section="evangelhos"]{background:#d65b58}
+.book[data-section="atos"]{background:#168c8c}
+.book[data-section="epistolas"]{background:#4769ae}
+.book[data-section="profecia"]{background:#a94d83}
+.empty{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;color:var(--muted);font-size:14px}
+.search-results{margin-top:16px}
+.result{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:8px 0;cursor:pointer}
+.result strong{display:block;color:var(--ink);margin-bottom:3px}
+.result span{font-size:13px;color:var(--muted)}
+.result mark{background:var(--hl);color:var(--hl-ink);padding:0 2px;border-radius:2px}
+.chapter-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:9px}
+.chapter{min-height:52px;border-radius:12px;background:var(--surface);border:1px solid var(--line);cursor:pointer;font-weight:800;color:var(--soft-ink)}
+.chapter:hover{border-color:var(--accent-line);background:var(--accent-soft);color:var(--accent)}
+.chapter.read{background:var(--ok);border-color:var(--ok);color:#fff}
+.chapter.read:hover{filter:brightness(1.08);background:var(--ok);border-color:var(--ok);color:#fff}
+.reader{max-width:760px;margin:auto}
+.reader-head{margin-bottom:9px}
+.reader-title{font-size:25px;margin:0;line-height:1.25;font-family:var(--font-bible)}
+.reader-meta{font-size:12px;color:var(--muted);margin-top:4px}
+.reader-actions,.chapter-nav{display:flex;align-items:stretch;gap:6px}
+.reader-actions{margin-top:10px}
+.chapter-nav{padding-top:12px}
+.reader-actions .action,.chapter-nav .action{flex:1}
+.action{min-height:38px;padding:7px 11px;border-radius:10px;background:var(--soft);color:var(--soft-ink);cursor:pointer;font-weight:700;font-size:13px}
+.action.primary{background:var(--accent);color:#fff}
+.action:disabled{opacity:.4;cursor:not-allowed}
+
+/* caixa "Lido" entre Anterior e Próximo */
+.read-toggle{position:relative;flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:7px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--line);color:var(--soft-ink);font-weight:700;font-size:13px;cursor:pointer;user-select:none;-webkit-user-select:none}
+.read-toggle input{position:absolute;opacity:0;width:100%;height:100%;left:0;top:0;margin:0;cursor:pointer}
+.read-toggle .box{width:20px;height:20px;border-radius:6px;border:2px solid var(--muted);display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;transition:background .15s,border-color .15s}
+.read-toggle .box svg{width:14px;height:14px;stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.read-toggle input:checked ~ .box{background:var(--ok);border-color:var(--ok)}
+.read-toggle input:checked ~ .box svg{opacity:1}
+.read-toggle:has(input:checked){background:var(--ok-soft);border-color:var(--ok);color:var(--ok-text)}
+.read-toggle input:focus-visible ~ .box{outline:3px solid var(--accent-line);outline-offset:2px}
+
+/* tamanho do texto */
+.reader-tools{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:8px;font-size:12px;color:var(--muted)}
+.reader-tools .tool-label{margin-right:2px}
+.size-btn{width:38px;height:34px;border-radius:9px;background:var(--soft);color:var(--soft-ink);cursor:pointer;font-weight:800;font-size:18px;line-height:1}
+.size-btn:disabled{opacity:.35;cursor:not-allowed}
+.size-label{min-width:28px;text-align:center;font-weight:700;color:var(--soft-ink)}
+
+.offline-badge{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:11px;color:var(--muted)}
+.offline-badge.saved{color:var(--ok-text)}
+.verses{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.verse{position:relative;padding:7px 2px;font-family:var(--font-bible);font-size:var(--verse-size);line-height:1.8}
+.verse b{display:inline-block;padding:.15em .5em .15em 0;color:var(--muted);font-family:Arial,Helvetica,sans-serif;font-size:.6em;vertical-align:top;font-weight:800;cursor:pointer}
+.verse mark,.highlight{background:var(--hl);color:var(--hl-ink);border-radius:3px;padding:0 1px}
+.verse mark{cursor:pointer}
+.loading{text-align:center;padding:42px 10px;color:var(--muted)}
+.error{padding:16px;background:var(--err-bg);border:1px solid var(--err-line);color:var(--err-ink);border-radius:13px;margin:12px 0}
+.note{font-size:11px;color:var(--muted);margin-top:12px}
+.selection-tool{position:fixed;left:0;right:0;bottom:0;z-index:120;display:none;justify-content:center;align-items:center;gap:8px;
+  background:#222;color:#fff;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 20px rgba(0,0,0,.25);border-top:1px solid #3a444b}
+.selection-tool.show{display:flex}
+.selection-tool .sel-preview{flex:1;min-width:0;font-size:12px;color:#c7ccd1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:40%}
+.selection-tool button{background:rgba(255,255,255,.12);color:#fff;padding:10px 14px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap}
+.selection-tool button:hover{background:rgba(255,255,255,.22)}
+.selection-tool #selToggleBtn{background:var(--accent)}
+.reader-menu{position:fixed;inset:0;background:rgba(10,18,25,.48);z-index:110;display:none}
+.reader-menu.show{display:block}
+.menu-panel{position:absolute;right:0;top:0;height:100%;width:min(330px,88%);background:var(--surface);color:var(--ink);padding:18px;box-shadow:-8px 0 30px rgba(0,0,0,.15);overflow:auto}
+.menu-panel h3{margin:0 0 15px}
+.menu-panel button{display:block;width:100%;text-align:left;padding:12px;border-radius:10px;background:var(--soft);color:var(--ink);margin:7px 0;cursor:pointer}
+.cache-list{font-size:12px;color:var(--muted);margin-top:18px}
+.version-btn{height:36px;padding:0 13px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
+.version-btn:hover{background:rgba(255,255,255,.24)}
+.menu-panel .version-opt{border:2px solid transparent}
+.menu-panel .version-opt.active{background:var(--accent-soft);border-color:var(--accent-line)}
+.version-opt strong{font-size:15px}
+.version-opt small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.compare-sheet{position:fixed;inset:0;background:rgba(10,18,25,.48);z-index:130;display:none;align-items:flex-end;justify-content:center}
+.compare-sheet.show{display:flex}
+.compare-panel{background:var(--surface);color:var(--ink);width:min(720px,100%);max-height:82vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.compare-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.compare-head h3{margin:0;font-size:18px}
+.compare-close{width:38px;height:38px;border-radius:10px;background:var(--soft);color:var(--ink);cursor:pointer;font-size:20px}
+.cmp-item{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}
+.cmp-item.current{border-color:var(--accent-line);background:var(--accent-soft)}
+.cmp-top{display:flex;gap:8px;align-items:baseline;font-size:12px;color:var(--muted)}
+.cmp-top strong{color:var(--ink);font-size:13px}
+.cmp-item p{margin:6px 0 0;font-family:var(--font-bible);font-size:16px;line-height:1.7}
+.cmp-item .cmp-load{margin-top:8px;padding:8px 12px;border-radius:9px;background:var(--accent);color:#fff;font-weight:700;font-size:13px;cursor:pointer}
+@media(min-width:650px){.book-grid{grid-template-columns:repeat(6,minmax(0,1fr))}.book{min-height:96px}.book .abbr{font-size:31px}}
+@media(min-width:950px){.book-grid{grid-template-columns:repeat(9,minmax(0,1fr))}.book{min-height:88px}}
+@media(max-width:480px){
+  :root{--verse-size:17px}
+  .container{padding:12px 9px 35px}
+  .title{font-size:21px}
+  .reader-title{font-size:23px}
+  .reader-actions .action,.chapter-nav .action{font-size:12px;padding:7px 8px}
+  .read-toggle{padding:7px 9px;font-size:12px;gap:6px}
+}
+</style>
+</head>
+<body>
+
+<div vw class="enabled">
+  <div vw-access-button class="active"></div>
+  <div vw-plugin-wrapper>
+    <div class="vw-plugin-top-wrapper"></div>
+  </div>
+</div>
+
+<header class="app-header">
+  <div class="header-inner">
+    <button class="header-btn" id="homeBtn" aria-label="Livros">☰</button>
+    <div class="brand">Bíblia Sagrada</div>
+    <button class="version-btn" id="versionBtn" type="button" aria-label="Escolher versão da Bíblia">ACF ▾</button>
+    <button class="header-btn theme-btn" id="themeBtn" type="button" aria-label="Mudar para o modo escuro" title="Alternar modo claro/escuro">
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.3M12 19.2v2.3M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.3M19.2 12h2.3M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>
+    </button>
+    <button class="header-btn" id="menuBtn" aria-label="Opções de leitura">⋮</button>
+  </div>
+</header>
+
+<main class="container">
+  <section id="booksView" class="view active">
+    <div id="storageWarning" class="error" style="display:none">
+      <strong>Atenção:</strong> este navegador não está permitindo salvar dados neste dispositivo. Os destaques e as versões salvas para leitura offline <u>não vão persistir</u> depois de fechar ou recarregar a página. Isso costuma acontecer quando o arquivo é aberto direto do disco (sem estar hospedado em um site) ou dentro do preview de outro aplicativo (e-mail, WhatsApp, Arquivos). Veja a explicação abaixo do app.
+    </div>
+    <nav class="hub-tabs" id="hubTabs" role="tablist" aria-label="Seções">
+      <button type="button" role="tab" data-aba="livros" class="active" aria-selected="true">Livros</button>
+      <button type="button" role="tab" data-aba="mapas" aria-selected="false">Mapas</button>
+      <button type="button" role="tab" data-aba="galeria" aria-selected="false">Ilustrações</button>
+      <button type="button" role="tab" data-aba="temas" aria-selected="false">Temas</button>
+    </nav>
+    <div id="hubLivros">
+    <div class="topbar">
+      <div>
+        <h1 class="title">Livros da Bíblia</h1>
+        <p class="subtitle">Escolha um livro ou procure uma palavra.</p>
+      </div>
+    </div>
+
+    <div class="progress-card" id="progressCard" aria-live="polite">
+      <div class="progress-top">
+        <span><strong>Seu progresso de leitura</strong> · <span id="progressText">0 de 0 capítulos</span></span>
+        <span class="progress-pct" id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-sub" id="progressSub"></div>
+    </div>
+
+    <div class="search-wrap">
+      <input id="searchInput" type="search" placeholder="Buscar livro ou palavra na Bíblia…" autocomplete="off" aria-label="Buscar na Bíblia">
+      <div class="search-icon">⌕</div>
+    </div>
+    <div class="search-mode" id="searchMode">
+      <button type="button" id="searchVersionBtn" class="active">Buscando em ACF • trocar versão</button>
+    </div>
+    <div id="searchInfo" class="search-info"></div>
+    <div id="searchResults" class="search-results"></div>
+    <div id="bookSections"></div>
+    </div>
+    <div id="hubMapas" hidden></div>
+    <div id="hubGaleria" hidden></div>
+    <div id="hubTemas" hidden></div>
+  </section>
+
+  <section id="chaptersView" class="view">
+    <div class="topbar">
+      <button class="back" id="backBooks" type="button" aria-label="Voltar aos livros">‹</button>
+      <div>
+        <h1 class="title" id="chaptersTitle">Livro</h1>
+        <p class="subtitle" id="chaptersSubtitle">Selecione o capítulo.</p>
+      </div>
+    </div>
+    <div id="chapterGrid" class="chapter-grid"></div>
+  </section>
+
+  <section id="readerView" class="view">
+    <div class="reader">
+      <div class="topbar">
+        <button class="back" id="backChapters" type="button" aria-label="Voltar aos capítulos">‹</button>
+        <div>
+          <h1 class="reader-title" id="readerTitle">Leitura</h1>
+          <div class="reader-meta" id="readerMeta">Texto bíblico</div>
+          <div class="offline-badge" id="offlineBadge">○ ainda não salvo neste dispositivo</div>
+        </div>
+      </div>
+
+      <div class="reader-actions">
+        <button class="action primary" id="prevChapter" type="button">← Anterior</button>
+        <label class="read-toggle"><input type="checkbox" class="read-check" aria-label="Marcar capítulo como lido"><span class="box"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Lido</span></label>
+        <button class="action" id="nextChapter" type="button">Próximo →</button>
+      </div>
+
+      <div class="reader-tools">
+        <span class="tool-label">Tamanho do texto</span>
+        <button class="size-btn" id="fontMinus" type="button" aria-label="Diminuir o tamanho da letra">−</button>
+        <span class="size-label" id="fontSizeLabel" aria-live="polite">18</span>
+        <button class="size-btn" id="fontPlus" type="button" aria-label="Aumentar o tamanho da letra">+</button>
+      </div>
+
+      <div id="recursosCap" class="recursos-cap"></div>
+
+      <div id="verses" class="verses" style="margin-top:10px">
+        <div class="loading">Carregando o texto bíblico…</div>
+      </div>
+
+      <div class="chapter-nav">
+        <button class="action" id="prevChapterBottom" type="button">← Anterior</button>
+        <label class="read-toggle"><input type="checkbox" class="read-check" aria-label="Marcar capítulo como lido"><span class="box"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Lido</span></label>
+        <button class="action" id="nextChapterBottom" type="button">Próximo →</button>
+      </div>
+      <div class="note">Troque a versão (ACF, AA ou NVI) no botão do topo. Cada versão é baixada uma única vez e depois funciona sem internet. Toque no número de um versículo para compará-lo nas três versões. Selecione um trecho de texto normalmente (com o dedo ou o mouse) — pode ser dentro de um versículo ou cruzando vários — e, quando aparecer a barra na parte de baixo da tela, toque em "Destacar" para marcá-lo. Para remover um destaque, toque diretamente sobre o trecho já marcado. Isso não interfere no menu de seleção do navegador (copiar, buscar, etc). Os destaques, o progresso de leitura, o tema e o tamanho da letra ficam salvos só neste aparelho, e cada pessoa acompanha o próprio progresso.</div>
+    </div>
+  </section>
+  <section id="mapaView" class="view">
+    <div class="topbar">
+      <button class="back" id="backMapa" type="button" aria-label="Voltar">‹</button>
+      <div>
+        <h1 class="title" id="mapaTitulo">Mapa</h1>
+        <p class="subtitle" id="mapaSub"></p>
+      </div>
+    </div>
+    <div class="map-wrap">
+      <div class="map-box" id="mapBox"></div>
+      <div class="map-ctl">
+        <button type="button" id="mapZoomIn" aria-label="Aproximar">+</button>
+        <button type="button" id="mapZoomOut" aria-label="Afastar">−</button>
+        <button type="button" id="mapReset" aria-label="Voltar à vista inicial" style="font-size:16px">⟲</button>
+      </div>
+    </div>
+    <div class="map-routes" id="mapRoutes"></div>
+    <div class="map-card" id="mapCard"></div>
+    <div class="map-refs" id="mapRefs"></div>
+    <div class="note" id="mapNota"></div>
+  </section>
+</main>
+
+<div id="readerMenu" class="reader-menu">
+  <aside class="menu-panel">
+    <button id="closeMenu" type="button" style="float:right;width:auto;padding:7px 11px">×</button>
+    <h3>Leitura</h3>
+    <button id="clearHighlights" type="button">Limpar destaques deste capítulo</button>
+    <button id="resetProgress" type="button">Zerar meu progresso de leitura</button>
+    <button id="clearCache" type="button">Remover versões baixadas deste dispositivo</button><button id="showSermon" type="button">Ver versículos salvos para sermão</button>
+    <button id="toggleIlus" type="button">Ilustrações no texto</button>
+    <button id="toggleLigs" type="button">Marcadores de ligações</button>
+    <div class="cache-list" id="cacheInfo"></div>
+  </aside>
+</div>
+
+<div id="versionPicker" class="reader-menu">
+  <aside class="menu-panel">
+    <button id="closeVersion" type="button" style="float:right;width:auto;padding:7px 11px">×</button>
+    <h3>Versão da Bíblia</h3>
+    <div id="versionList"></div>
+    <div class="cache-list">Textos: NVI © Sociedade Bíblica Internacional; ACF © Sociedade Bíblica Trinitariana; AA © Imprensa Bíblica Brasileira. Arquivos do projeto thiagobodruk/biblia (licença CC BY-NC, uso não comercial). Mapas: base Natural Earth (domínio público). Ilustrações: arte vetorial original deste projeto.</div>
+  </aside>
+</div>
+
+<div id="compareSheet" class="compare-sheet">
+  <div class="compare-panel">
+    <div class="compare-head">
+      <h3 id="compareTitle">Comparar versões</h3>
+      <button class="compare-close" id="compareClose" type="button" aria-label="Fechar">×</button>
+    </div>
+    <div id="compareBody"></div>
+  </div>
+</div>
+
+<div id="selectionTool" class="selection-tool" role="toolbar" aria-label="Ações de destaque">
+  <span class="sel-preview" id="selPreview"></span>
+  <button type="button" id="selCancelBtn">Cancelar</button>
+  <button type="button" id="selToggleBtn">Destacar</button>
+</div>
+
+<script>
+const BOOKS = [
+  ["Gn","Gênesis",50,"pentateuco"],["Ex","Êxodo",40,"pentateuco"],["Lv","Levítico",27,"pentateuco"],["Nm","Números",36,"pentateuco"],["Dt","Deuteronômio",34,"pentateuco"],
+  ["Js","Josué",24,"historicos"],["Jz","Juízes",21,"historicos"],["Rt","Rute",4,"historicos"],["1Sm","1 Samuel",31,"historicos"],["2Sm","2 Samuel",24,"historicos"],["1Rs","1 Reis",22,"historicos"],["2Rs","2 Reis",25,"historicos"],["1Cr","1 Crônicas",29,"historicos"],["2Cr","2 Crônicas",36,"historicos"],["Ed","Esdras",10,"historicos"],["Ne","Neemias",13,"historicos"],["Et","Ester",10,"historicos"],
+  ["Jó","Jó",42,"poeticos"],["Sl","Salmos",150,"poeticos"],["Pv","Provérbios",31,"poeticos"],["Ec","Eclesiastes",12,"poeticos"],["Ct","Cantares",8,"poeticos"],
+  ["Is","Isaías",66,"profetas"],["Jr","Jeremias",52,"profetas"],["Lm","Lamentações",5,"profetas"],["Ez","Ezequiel",48,"profetas"],["Dn","Daniel",12,"profetas"],["Os","Oséias",14,"profetas"],["Jl","Joel",3,"profetas"],["Am","Amós",9,"profetas"],["Ob","Obadias",1,"profetas"],["Jn","Jonas",4,"profetas"],["Mq","Miquéias",7,"profetas"],["Na","Naum",3,"profetas"],["Hc","Habacuque",3,"profetas"],["Sf","Sofonias",3,"profetas"],["Ag","Ageu",2,"profetas"],["Zc","Zacarias",14,"profetas"],["Ml","Malaquias",4,"profetas"],
+  ["Mt","Mateus",28,"evangelhos"],["Mc","Marcos",16,"evangelhos"],["Lc","Lucas",24,"evangelhos"],["Jo","João",21,"evangelhos"],
+  ["At","Atos",28,"atos"],
+  ["Rm","Romanos",16,"epistolas"],["1Co","1 Coríntios",16,"epistolas"],["2Co","2 Coríntios",13,"epistolas"],["Gl","Gálatas",6,"epistolas"],["Ef","Efésios",6,"epistolas"],["Fp","Filipenses",4,"epistolas"],["Cl","Colossenses",4,"epistolas"],["1Ts","1 Tessalonicenses",5,"epistolas"],["2Ts","2 Tessalonicenses",3,"epistolas"],["1Tm","1 Timóteo",6,"epistolas"],["2Tm","2 Timóteo",4,"epistolas"],["Tt","Tito",3,"epistolas"],["Fm","Filemom",1,"epistolas"],["Hb","Hebreus",13,"epistolas"],["Tg","Tiago",5,"epistolas"],["1Pe","1 Pedro",5,"epistolas"],["2Pe","2 Pedro",3,"epistolas"],["1Jo","1 João",5,"epistolas"],["2Jo","2 João",1,"epistolas"],["3Jo","3 João",1,"epistolas"],["Jd","Judas",1,"epistolas"],
+  ["Ap","Apocalipse",22,"profecia"]
+];
+
+const SECTION_NAMES={
+  pentateuco:"Pentateuco",historicos:"Livros Históricos",poeticos:"Poéticos",profetas:"Profetas",evangelhos:"Evangelhos",atos:"Atos dos Apóstolos",epistolas:"Epístolas",profecia:"Profecia"
+};
+
+const VERSIONS=[
+  {id:"acf",short:"ACF",name:"Almeida Corrigida Fiel"},
+  {id:"aa",short:"AA",name:"Almeida Revisada Imprensa Bíblica"},
+  {id:"nvi",short:"NVI",name:"Nova Versão Internacional"}
+];
+const VERSION_URL=id=>`https://raw.githubusercontent.com/thiagobodruk/biblia/master/json/${id}.json`;
+const STORAGE_MARKS="biblia_almeida_marks_v3";   // destaques por versão
+const LEGACY_MARKS="biblia_almeida_marks_v2";    // destaques antigos (sem versão)
+const STORAGE_VERSION="biblia_versao_v1";
+const STORAGE_DOWNLOADED="biblia_versoes_baixadas_v1";
+const CACHE_NAME="biblia-versoes-v1";
+const STORAGE_READ="biblia_lidos_v1";      // capítulos lidos: { "Gn":[1,2,5], ... }
+const STORAGE_THEME="biblia_tema_v1";      // "light" | "dark"
+const STORAGE_FONT="biblia_fonte_v1";      // tamanho da letra em px
+
+const $=id=>document.getElementById(id);
+const bookSections=$("bookSections"), chapterGrid=$("chapterGrid"), verses=$("verses");
+let selectedBook=null,selectedChapter=1;
+
+let storageAvailable=null;
+function checkStorageAvailable(){
+  if(storageAvailable!==null)return storageAvailable;
+  try{
+    const testKey="__biblia_storage_test__";
+    localStorage.setItem(testKey,"1");
+    const ok=localStorage.getItem(testKey)==="1";
+    localStorage.removeItem(testKey);
+    storageAvailable=ok;
+  }catch{
+    storageAvailable=false;
+  }
+  if(!storageAvailable){
+    const banner=$("storageWarning");
+    if(banner)banner.style.display="block";
+  }
+  return storageAvailable;
+}
+function safeRead(key,fallback){
+  try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}catch{return fallback}
+}
+function save(key,value){
+  try{
+    localStorage.setItem(key,JSON.stringify(value));
+    // Confere se realmente gravou — alguns navegadores aceitam a chamada
+    // sem erro mas não persistem nada (ex.: abas anônimas em certos modos).
+    if(localStorage.getItem(key)===null)checkStorageAvailable();
+  }catch{
+    storageAvailable=false;
+    const banner=$("storageWarning");
+    if(banner)banner.style.display="block";
+  }
+}
+function getVersion(id){return VERSIONS.find(v=>v.id===id)||VERSIONS[0];}
+let currentVersion=getVersion(safeRead(STORAGE_VERSION,"acf")).id;
+function getMarks(){return safeRead(STORAGE_MARKS,{});}
+function cacheKey(book,chapter){return currentVersion+"|"+book[1]+" "+chapter;}
+function legacyKey(book,chapter){return book[1]+" "+chapter;}
+
+/* ---------- Progresso de leitura (salvo só neste aparelho) ---------- */
+
+const OT_BOOKS=39; // os 39 primeiros livros da lista são o Antigo Testamento
+const TOTAL_CHAPTERS=BOOKS.reduce((s,b)=>s+b[2],0);
+const OT_CHAPTERS=BOOKS.slice(0,OT_BOOKS).reduce((s,b)=>s+b[2],0);
+const NT_CHAPTERS=TOTAL_CHAPTERS-OT_CHAPTERS;
+
+function getRead(){
+  const r=safeRead(STORAGE_READ,{});
+  return (r&&typeof r==="object"&&!Array.isArray(r))?r:{};
+}
+// Lista de capítulos lidos de um livro (ignora valores inválidos).
+function readChaptersOf(book,all=getRead()){
+  const list=Array.isArray(all[book[0]])?all[book[0]]:[];
+  return [...new Set(list.filter(n=>Number.isInteger(n)&&n>=1&&n<=book[2]))];
+}
+function isRead(book,chapter){return readChaptersOf(book).includes(chapter);}
+function setRead(book,chapter,flag){
+  const all=getRead(),set=new Set(readChaptersOf(book,all));
+  if(flag)set.add(chapter);else set.delete(chapter);
+  if(set.size)all[book[0]]=[...set].sort((a,b)=>a-b);else delete all[book[0]];
+  save(STORAGE_READ,all);
+}
+
+function renderProgress(){
+  const all=getRead();
+  let total=0,ot=0,nt=0;
+  BOOKS.forEach((b,i)=>{const c=readChaptersOf(b,all).length;total+=c;if(i<OT_BOOKS)ot+=c;else nt+=c;});
+  const pct=TOTAL_CHAPTERS?total/TOTAL_CHAPTERS*100:0;
+  const pctTxt=(total===0?"0":total===TOTAL_CHAPTERS?"100":pct<10?pct.toFixed(1).replace(".",","):String(Math.floor(pct)))+"%";
+  $("progressFill").style.width=pct+"%";
+  $("progressPct").textContent=pctTxt;
+  $("progressText").textContent=`${total.toLocaleString("pt-BR")} de ${TOTAL_CHAPTERS.toLocaleString("pt-BR")} capítulos`;
+  $("progressBar").setAttribute("aria-valuenow",String(Math.round(pct)));
+  $("progressSub").textContent=total===TOTAL_CHAPTERS
+    ?"Parabéns! Você leu a Bíblia inteira."
+    :`Antigo Testamento: ${ot} de ${OT_CHAPTERS} · Novo Testamento: ${nt} de ${NT_CHAPTERS}`;
+}
+
+function updateReadToggle(){
+  const r=selectedBook?isRead(selectedBook,selectedChapter):false;
+  document.querySelectorAll(".read-check").forEach(c=>{c.checked=r;});
+}
+
+function showView(id){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  $(id).classList.add("active");
+  if(id==="booksView"){renderBooks($("searchInput").value);renderProgress();}
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function renderBooks(filter=""){
+  const term=filter.trim().toLocaleLowerCase("pt-BR");
+  const all=getRead();
+  const grid=document.createElement("div");grid.className="book-grid";
+  BOOKS.forEach((b,i)=>{
+    const matches=!term || b[0].toLocaleLowerCase("pt-BR").includes(term) || b[1].toLocaleLowerCase("pt-BR").includes(term);
+    if(!matches)return;
+    const done=readChaptersOf(b,all).length;
+    const btn=document.createElement("button");
+    btn.type="button";btn.className="book"+(done===b[2]?" done":"");btn.dataset.section=b[3];
+    btn.setAttribute("aria-label",`${b[1]}, ${done} de ${b[2]} capítulos lidos`);
+    btn.innerHTML=`<span class="abbr">${b[0]}</span><span class="name">${b[1]}</span>`+(done?`<span class="book-bar"><i style="width:${done/b[2]*100}%"></i></span>`:"");
+    btn.addEventListener("click",()=>openChapters(i));
+    grid.appendChild(btn);
+  });
+  bookSections.innerHTML="";
+  if(grid.children.length)bookSections.appendChild(grid);
+  else bookSections.innerHTML='<div class="empty">Nenhum livro encontrado.</div>';
+}
+function openChapters(index){
+  selectedBook=BOOKS[index];
+  const readSet=new Set(readChaptersOf(selectedBook));
+  $("chaptersTitle").textContent=selectedBook[1];
+  $("chaptersSubtitle").textContent=`Selecione o capítulo • ${readSet.size} de ${selectedBook[2]} lidos`;
+  chapterGrid.innerHTML=Array.from({length:selectedBook[2]},(_,i)=>{
+    const n=i+1,r=readSet.has(n);
+    return `<button class="chapter${r?" read":""}" type="button" data-chapter="${n}" aria-label="Capítulo ${n}${r?" (lido)":""}">${n}</button>`;
+  }).join("");
+  chapterGrid.querySelectorAll(".chapter").forEach(btn=>btn.addEventListener("click",()=>openChapter(Number(btn.dataset.chapter))));
+  showView("chaptersView");
+}
+
+function openChapter(chapter){
+  selectedChapter=chapter;
+  $("readerTitle").textContent=`${selectedBook[1]} ${chapter}`;
+  $("readerMeta").textContent="Texto bíblico • selecione um trecho para destacar ou remover o destaque";
+  verses.innerHTML='<div class="loading">Carregando o texto bíblico…</div>';
+  updateNav();
+  showView("readerView");
+  loadChapter();
+}
+
+function updateNav(){
+  $("prevChapter").disabled=selectedChapter<=1;
+  $("prevChapterBottom").disabled=selectedChapter<=1;
+  $("nextChapter").disabled=selectedChapter>=selectedBook[2];
+  $("nextChapterBottom").disabled=selectedChapter>=selectedBook[2];
+  updateReadToggle();
+}
+
+/* ---------- Versões da Bíblia (arquivos JSON do projeto thiagobodruk/biblia) ---------- */
+
+const versionData={};      // id -> [livro][capítulo][versículo] (textos)
+const versionPromises={};  // downloads em andamento
+const versionNorm={};      // textos normalizados para a busca
+
+function isDownloaded(id){return safeRead(STORAGE_DOWNLOADED,[]).includes(id);}
+function setDownloaded(id,flag){
+  const list=safeRead(STORAGE_DOWNLOADED,[]).filter(x=>x!==id);
+  if(flag)list.push(id);
+  save(STORAGE_DOWNLOADED,list);
+}
+
+function normalizeVersion(raw){
+  const books=Array.isArray(raw)?raw:Object.values(raw);
+  return books.map(b=>(b.chapters||[]).map(ch=>(Array.isArray(ch)?ch:(ch.verses||[])).map(v=>typeof v==="string"?v:(v.text||""))));
+}
+
+// Usa o Cache Storage (quando disponível) para guardar o arquivo da versão e
+// permitir leitura offline; sem ele, o navegador ainda usa o cache HTTP normal.
+async function fetchVersionRaw(id){
+  const url=VERSION_URL(id);
+  let cache=null;
+  try{cache=("caches" in window)?await caches.open(CACHE_NAME):null;}catch{cache=null;}
+  if(cache){
+    try{
+      const hit=await cache.match(url);
+      if(hit)return {raw:await hit.json(),stored:true};
+    }catch{}
+  }
+  const res=await fetch(url);
+  if(!res.ok)throw new Error("HTTP "+res.status);
+  let stored=false;
+  if(cache){try{await cache.put(url,res.clone());stored=true;}catch{}}
+  return {raw:await res.json(),stored};
+}
+
+function loadVersion(id){
+  if(versionData[id])return Promise.resolve(versionData[id]);
+  if(versionPromises[id])return versionPromises[id];
+  versionPromises[id]=fetchVersionRaw(id).then(({raw,stored})=>{
+    const data=normalizeVersion(raw);
+    if(data.length<66)throw new Error("Arquivo da versão incompleto");
+    versionData[id]=data;
+    setDownloaded(id,stored);
+    delete versionPromises[id];
+    return data;
+  }).catch(e=>{delete versionPromises[id];throw e;});
+  return versionPromises[id];
+}
+
+function loadChapter(){
+  const version=currentVersion,vInfo=getVersion(version),chapter=selectedChapter,bookIndex=BOOKS.indexOf(selectedBook);
+  const stale=()=>version!==currentVersion||chapter!==selectedChapter||bookIndex!==BOOKS.indexOf(selectedBook);
+  if(!versionData[version]){
+    verses.innerHTML=`<div class="loading">${isDownloaded(version)?"Abrindo":"Baixando"} ${escapeHtml(vInfo.name)}…<br><small>${isDownloaded(version)?"":"Só na primeira vez; depois funciona sem internet."}</small></div>`;
+  }
+  loadVersion(version).then(data=>{
+    if(stale())return;
+    renderBible(data[bookIndex]?.[chapter-1]||[]);
+  }).catch(()=>{
+    if(stale())return;
+    verses.innerHTML=`<div class="error"><strong>Não foi possível carregar a versão ${escapeHtml(vInfo.short)}.</strong><br>Verifique a conexão com a internet. Depois de baixada uma vez, a versão fica disponível offline (em um site hospedado com https).</div>`;
+  });
+}
+
+function renderBible(list){
+  if(!list.length){verses.innerHTML='<div class="error">A passagem não foi encontrada nesta versão.</div>';return;}
+  const key=cacheKey(selectedBook,selectedChapter);
+  let marks=getMarks()[key];
+  if(!marks)marks=safeRead(LEGACY_MARKS,{})[legacyKey(selectedBook,selectedChapter)]||[];
+  verses.innerHTML=list.map((t,i)=>`<div class="verse" data-verse="${i+1}"><b>${i+1}</b>${escapeHtml(String(t||"").trim())}</div>`).join("");
+  applyMarks(marks);
+  if(window.Recursos)Recursos.aposRenderizar();
+  const vInfo=getVersion(currentVersion),offline=isDownloaded(currentVersion);
+  $("offlineBadge").textContent=offline?"● versão disponível offline":"○ carregada da internet (não salva para offline)";
+  $("offlineBadge").classList.toggle("saved",offline);
+  $("readerMeta").textContent=`${vInfo.short} • ${vInfo.name} • toque no número do versículo para comparar versões`;
+  updateNav();
+}
+
+/* ---------- Seletor de versão ---------- */
+
+function updateVersionButton(){
+  const v=getVersion(currentVersion);
+  $("versionBtn").textContent=v.short+" ▾";
+  $("searchVersionBtn").textContent="Buscando em "+v.short+" • trocar versão";
+}
+
+function renderVersionList(){
+  $("versionList").innerHTML=VERSIONS.map(v=>{
+    const status=isDownloaded(v.id)?"● baixada — funciona offline":(versionData[v.id]?"● carregada nesta sessão":"○ será baixada ao selecionar");
+    return `<button type="button" class="version-opt${v.id===currentVersion?" active":""}" data-id="${v.id}"><strong>${v.short}</strong> — ${escapeHtml(v.name)}<small>${status}</small></button>`;
+  }).join("");
+  $("versionList").querySelectorAll(".version-opt").forEach(btn=>btn.addEventListener("click",()=>selectVersion(btn.dataset.id)));
+}
+
+function openVersionPicker(){renderVersionList();$("versionPicker").classList.add("show");}
+
+function selectVersion(id){
+  currentVersion=getVersion(id).id;
+  save(STORAGE_VERSION,currentVersion);
+  updateVersionButton();
+  $("versionPicker").classList.remove("show");
+  if($("readerView").classList.contains("active")&&selectedBook)loadChapter();
+  const q=$("searchInput").value;
+  if(q.trim())searchBible(q);
+}
+
+/* ---------- Comparação de um versículo entre as versões ---------- */
+
+let compareState=null;
+async function openCompare(verseNo){
+  const bookIndex=BOOKS.indexOf(selectedBook),chapter=selectedChapter;
+  compareState={verseNo,bookIndex,chapter};
+  $("compareTitle").textContent=`${selectedBook[1]} ${chapter}:${verseNo}`;
+  $("compareSheet").classList.add("show");
+  $("compareBody").innerHTML='<div class="loading">Carregando…</div>';
+  const parts=await Promise.all(VERSIONS.map(async v=>{
+    if(!versionData[v.id]&&!isDownloaded(v.id))return {v,state:"pending"};
+    try{
+      const data=await loadVersion(v.id);
+      return {v,state:"ok",text:data[bookIndex]?.[chapter-1]?.[verseNo-1]||""};
+    }catch{return {v,state:"error"};}
+  }));
+  if(!compareState||compareState.verseNo!==verseNo||compareState.chapter!==chapter||compareState.bookIndex!==bookIndex)return;
+  $("compareBody").innerHTML=parts.map(({v,state,text})=>{
+    let body;
+    if(state==="ok")body=`<p>${text?escapeHtml(String(text).trim()):"Este versículo não existe nesta versão."}</p>`;
+    else if(state==="pending")body=`<button type="button" class="cmp-load" data-id="${v.id}">Baixar ${v.short} e comparar</button>`;
+    else body="<p>Não foi possível carregar esta versão (sem conexão).</p>";
+    return `<div class="cmp-item${v.id===currentVersion?" current":""}"><div class="cmp-top"><strong>${v.short}</strong><span>${escapeHtml(v.name)}</span></div>${body}</div>`;
+  }).join("");
+  $("compareBody").querySelectorAll(".cmp-load").forEach(btn=>btn.addEventListener("click",async()=>{
+    btn.disabled=true;btn.textContent="Baixando…";
+    try{await loadVersion(btn.dataset.id);}catch{}
+    openCompare(verseNo);
+  }));
+}
+function closeCompare(){compareState=null;$("compareSheet").classList.remove("show");}
+
+function applyMarks(list){
+  list.forEach(mark=>{
+    const el=verses.querySelector(`.verse[data-verse="${CSS.escape(String(mark.verse))}"]`);
+    if(!el||!mark.text)return;
+    highlightTextInElement(el,mark.text,false);
+  });
+}
+
+function highlightTextInElement(el,text,selectAfter){
+  const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+  let node;
+  while(node=walker.nextNode()){
+    const index=node.nodeValue.indexOf(text);
+    if(index<0)continue;
+    const range=document.createRange();
+    range.setStart(node,index);range.setEnd(node,index+text.length);
+    const mark=document.createElement("mark");
+    mark.className="highlight";
+    range.surroundContents(mark);
+    if(selectAfter){
+      const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
+    }
+    return true;
+  }
+  return false;
+}
+
+function storeCurrentMarks(){
+  const all=getMarks(),key=cacheKey(selectedBook,selectedChapter),list=[];
+  verses.querySelectorAll(".verse").forEach(v=>{
+    v.querySelectorAll("mark.highlight").forEach(m=>{
+      const text=m.textContent.trim();
+      if(text)list.push({verse:v.dataset.verse,text});
+    });
+  });
+  all[key]=list;save(STORAGE_MARKS,all);
+}
+
+function changeChapter(delta){
+  if(!selectedBook)return;
+  const next=selectedChapter+delta;
+  if(next>=1&&next<=selectedBook[2])openChapter(next);
+}
+
+function escapeHtml(v){return String(v).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
+
+let searchTimer=null;
+function normalizeText(s){return String(s||"").toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g,"");}
+function searchBible(term){
+  clearTimeout(searchTimer);
+  const q=term.trim(),results=$("searchResults"),info=$("searchInfo");
+  if(!q){results.innerHTML="";info.textContent="";renderBooks("");return;}
+  renderBooks(q);
+  searchTimer=setTimeout(()=>runGlobalSearch(q),300);
+}
+async function runGlobalSearch(q){
+  const results=$("searchResults"),info=$("searchInfo"),version=currentVersion,vInfo=getVersion(version);
+  results.innerHTML=`<div class="loading">${versionData[version]?"Buscando…":"Baixando "+escapeHtml(vInfo.name)+" para a busca…"}</div>`;info.textContent="";
+  try{
+    const data=await loadVersion(version);
+    if(version!==currentVersion||$("searchInput").value.trim()!==q)return; // busca ficou desatualizada
+    if(!versionNorm[version])versionNorm[version]=data.map(book=>book.map(chapter=>chapter.map(normalizeText)));
+    const norm=versionNorm[version],terms=normalizeText(q).split(/\s+/).filter(Boolean),found=[];
+    data.forEach((book,bi)=>{
+      const name=BOOKS[bi]?.[1]||"Livro";
+      book.forEach((chapter,ci)=>chapter.forEach((text,vi)=>{
+        const nt=norm[bi][ci][vi];
+        if(terms.every(t=>nt.includes(t)))found.push({book_name:name,chapter:ci+1,verse_number:vi+1,text});
+      }));
+    });
+    results.innerHTML="";
+    info.textContent=`${found.length} resultado(s) em ${vInfo.short}`+(found.length>200?" (mostrando os 200 primeiros)":"");
+    if(!found.length){results.innerHTML='<div class="empty">Nenhum versículo encontrado nesta versão.</div>';return;}
+    found.slice(0,200).forEach(r=>addSearchResult(r,q));
+  }catch(e){results.innerHTML='<div class="error"><strong>Não foi possível carregar a busca.</strong><br>Verifique sua conexão com a internet e tente novamente.</div>';}
+}
+function addSearchResult(r,q){
+  const bookName=r.book_name||r.book||"Livro",chapter=Number(r.chapter||1),verse=Number(r.verse_number||r.verse||1),text=String(r.text||"").trim();
+  const item=document.createElement("div");item.className="result";
+  item.innerHTML=`<strong>${escapeHtml(bookName)} ${chapter}:${verse}</strong><span>${highlightQuery(escapeHtml(text),q)}</span><div class="result-actions"><button type="button" class="open-result">Abrir capítulo</button><button type="button" class="save-result">Salvar para sermão</button></div>`;
+  item.querySelector(".open-result").addEventListener("click",e=>{e.stopPropagation();openSearchResult(bookName,chapter,verse,q)});
+  item.querySelector(".save-result").addEventListener("click",e=>{e.stopPropagation();saveSermonVerse(bookName,chapter,verse,text)});
+  item.addEventListener("click",()=>openSearchResult(bookName,chapter,verse,q));$("searchResults").appendChild(item);
+}
+function openSearchResult(bookName,chapter,verseNo){const book=BOOKS.find(b=>b[1].toLocaleLowerCase("pt-BR")===String(bookName).toLocaleLowerCase("pt-BR")||b[0].toLocaleLowerCase("pt-BR")===String(bookName).toLocaleLowerCase("pt-BR"));if(!book)return;selectedBook=book;openChapter(chapter);setTimeout(()=>{const v=verses.querySelector(`.verse[data-verse="${CSS.escape(String(verseNo))}"]`);if(v){v.scrollIntoView({behavior:"smooth",block:"center"});v.style.boxShadow="inset 4px 0 0 var(--accent)";setTimeout(()=>v.style.boxShadow="",2200);}},450);}
+function saveSermonVerse(book,chapter,verse,text){const key="biblia_sermao_v1",ver=getVersion(currentVersion).short,data=safeRead(key,{theme:"",verses:[]});if(!data.verses.some(v=>v.book===book&&v.chapter===chapter&&v.verse===verse&&(v.version||"")===ver))data.verses.push({book,chapter,verse,text,version:ver});save(key,data);alert(`${book} ${chapter}:${verse} (${ver}) foi salvo na coleção do sermão.`);}
+function highlightQuery(text,q){const terms=q.split(/\s+/).filter(Boolean).map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"));if(!terms.length)return text;return text.replace(new RegExp("("+terms.join("|")+")","ig"),"<mark>$1</mark>");}
+
+/* ---------- Seleção e destaque de texto (compatível com o menu nativo do navegador/celular) ---------- */
+
+const selectionTool=$("selectionTool"), selToggleBtn=$("selToggleBtn"), selCancelBtn=$("selCancelBtn"), selPreview=$("selPreview");
+let selectionTimer=null;
+let pendingSubRanges=null; // [{verseEl, subRange}, ...]
+
+function getVerseElements(){
+  return [...verses.querySelectorAll(".verse")];
+}
+
+// Descobre quais elementos .verse a seleção toca (mesmo que ela cruze vários).
+function getIntersectingVerses(range){
+  return getVerseElements().filter(v=>{
+    try{return range.intersectsNode?range.intersectsNode(v):rangeIntersectsNodeFallback(range,v);}
+    catch{return false;}
+  });
+}
+function rangeIntersectsNodeFallback(range,node){
+  const nodeRange=document.createRange();
+  nodeRange.selectNode(node);
+  return range.compareBoundaryPoints(Range.END_TO_START,nodeRange)<0 && range.compareBoundaryPoints(Range.START_TO_END,nodeRange)>0;
+}
+
+// Recorta a seleção original para a parte que cabe dentro de um único
+// versículo, sempre pulando o número do versículo (a tag <b>).
+function buildVerseSubRange(range,verseEl,isFirst,isLast){
+  const bTag=verseEl.querySelector(":scope > b");
+  const bIndex=bTag?Array.prototype.indexOf.call(verseEl.childNodes,bTag):-1;
+  const contentStartOffset=bIndex>=0?bIndex+1:0;
+
+  let startNode=verseEl,startOffset=contentStartOffset;
+  if(isFirst&&verseEl.contains(range.startContainer)){
+    const insideNumber=bTag&&(range.startContainer===bTag||bTag.contains(range.startContainer));
+    if(!insideNumber){startNode=range.startContainer;startOffset=range.startOffset;}
+  }
+
+  let endNode=verseEl,endOffset=verseEl.childNodes.length;
+  if(isLast&&verseEl.contains(range.endContainer)){
+    endNode=range.endContainer;endOffset=range.endOffset;
+  }
+
+  const subRange=document.createRange();
+  try{
+    subRange.setStart(startNode,startOffset);
+    subRange.setEnd(endNode,endOffset);
+  }catch{return null;}
+  return subRange.collapsed?null:subRange;
+}
+
+function computePendingSubRanges(range){
+  const intersecting=getIntersectingVerses(range);
+  if(!intersecting.length)return null;
+  const first=intersecting[0],last=intersecting[intersecting.length-1];
+  const result=[];
+  intersecting.forEach(verseEl=>{
+    const subRange=buildVerseSubRange(range,verseEl,verseEl===first,verseEl===last);
+    if(subRange&&subRange.toString().trim())result.push({verseEl,subRange});
+  });
+  return result.length?result:null;
+}
+
+function hideSelectionTool(){
+  selectionTool.classList.remove("show");
+  pendingSubRanges=null;
+}
+
+// Só avalia a seleção depois que o usuário parou de mexer (evita reagir
+// no meio do arraste das alças de seleção no celular).
+function evaluateSelection(){
+  const sel=window.getSelection();
+  if(!sel||sel.rangeCount===0||sel.isCollapsed){hideSelectionTool();return;}
+
+  const range=sel.getRangeAt(0);
+  if(!range.toString().trim()){hideSelectionTool();return;}
+
+  // A seleção precisa tocar o texto bíblico (pode cruzar vários versículos).
+  const commonNode=range.commonAncestorContainer;
+  const commonEl=commonNode.nodeType===Node.ELEMENT_NODE?commonNode:commonNode.parentElement;
+  if(!commonEl||!verses.contains(commonEl)&&commonEl!==verses){hideSelectionTool();return;}
+
+  const subRanges=computePendingSubRanges(range);
+  if(!subRanges){hideSelectionTool();return;}
+
+  pendingSubRanges=subRanges;
+
+  const firstVerseNo=subRanges[0].verseEl.dataset.verse;
+  const lastVerseNo=subRanges[subRanges.length-1].verseEl.dataset.verse;
+  const combinedText=subRanges.map(r=>r.subRange.toString().trim()).join(" ");
+  const previewText=combinedText.length>60?combinedText.slice(0,60)+"…":combinedText;
+
+  if(subRanges.length===1){
+    const verseEl=subRanges[0].verseEl,text=subRanges[0].subRange.toString().trim();
+    const alreadyHighlighted=[...verseEl.querySelectorAll("mark.highlight")].some(m=>m.textContent.trim()===text);
+    selToggleBtn.textContent=alreadyHighlighted?"Remover destaque":"Destacar";
+    selPreview.textContent="\u201C"+previewText+"\u201D";
+  }else{
+    selToggleBtn.textContent="Destacar";
+    selPreview.textContent=`vv. ${firstVerseNo}–${lastVerseNo}: \u201C${previewText}\u201D`;
+  }
+
+  selectionTool.classList.add("show");
+}
+
+function applyPendingHighlight(){
+  if(!pendingSubRanges||!pendingSubRanges.length){hideSelectionTool();return;}
+
+  // Seleção de um único versículo: mantém o comportamento de alternar
+  // (destacar / remover destaque) quando o trecho já estava marcado.
+  if(pendingSubRanges.length===1){
+    const {verseEl,subRange}=pendingSubRanges[0];
+    const text=subRange.toString().trim();
+    try{
+      const marks=[...verseEl.querySelectorAll("mark.highlight")];
+      const existing=marks.find(mark=>mark.textContent.trim()===text);
+      if(existing){
+        existing.replaceWith(...existing.childNodes);
+      }else{
+        wrapRangeInMark(subRange);
+      }
+    }catch{}
+  }else{
+    // Seleção cruzando vários versículos: marca a parte correspondente
+    // em cada versículo, sempre pulando o número do versículo.
+    pendingSubRanges.forEach(({subRange})=>{
+      try{wrapRangeInMark(subRange);}catch{}
+    });
+  }
+
+  storeCurrentMarks();
+  window.getSelection()?.removeAllRanges();
+  hideSelectionTool();
+}
+
+function wrapRangeInMark(range){
+  const mark=document.createElement("mark");
+  mark.className="highlight";
+  const fragment=range.extractContents();
+  mark.appendChild(fragment);
+  range.insertNode(mark);
+}
+
+// Só reage depois de uma pausa: enquanto o dedo ainda está arrastando as
+// alças de seleção no celular, "selectionchange" dispara várias vezes.
+document.addEventListener("selectionchange",()=>{
+  clearTimeout(selectionTimer);
+  selectionTimer=setTimeout(evaluateSelection,220);
+});
+
+selToggleBtn.addEventListener("click",applyPendingHighlight);
+selCancelBtn.addEventListener("click",()=>{
+  window.getSelection()?.removeAllRanges();
+  hideSelectionTool();
+});
+
+// Fecha o botão flutuante se o usuário tocar fora do texto ou da própria
+// ferramenta (mas não interfere na seleção em si, para não brigar com o
+// menu nativo de copiar/buscar do navegador).
+document.addEventListener("mousedown",e=>{
+  if(!selectionTool.contains(e.target)&&!verses.contains(e.target))hideSelectionTool();
+});
+document.addEventListener("touchstart",e=>{
+  if(!selectionTool.contains(e.target)&&!verses.contains(e.target))hideSelectionTool();
+},{passive:true});
+window.addEventListener("scroll",()=>{
+  if(selectionTool.classList.contains("show"))hideSelectionTool();
+},{passive:true,capture:true});
+
+verses.addEventListener("click",e=>{
+  const mark=e.target.closest("mark.highlight");
+  if(mark){
+    mark.replaceWith(...mark.childNodes);
+    storeCurrentMarks();
+    hideSelectionTool();
+  }
+});
+
+// Toque no número do versículo: compara o versículo nas três versões.
+verses.addEventListener("click",e=>{
+  const num=e.target.closest(".verse b");
+  if(!num)return;
+  const verse=num.closest(".verse");
+  if(verse)openCompare(Number(verse.dataset.verse));
+});
+
+$("searchInput").addEventListener("input",e=>searchBible(e.target.value));
+$("versionBtn").addEventListener("click",openVersionPicker);
+$("searchVersionBtn").addEventListener("click",openVersionPicker);
+$("closeVersion").addEventListener("click",()=>$("versionPicker").classList.remove("show"));
+$("versionPicker").addEventListener("click",e=>{if(e.target.id==="versionPicker")$("versionPicker").classList.remove("show")});
+$("compareClose").addEventListener("click",closeCompare);
+$("compareSheet").addEventListener("click",e=>{if(e.target.id==="compareSheet")closeCompare()});
+$("showSermon").addEventListener("click",()=>{
+  const data=safeRead("biblia_sermao_v1",{theme:"",verses:[]});
+  alert(data.verses.length?data.verses.map((v,i)=>`${i+1}. ${v.book} ${v.chapter}:${v.verse}${v.version?" ("+v.version+")":""} — ${v.text}`).join("\n\n"):"Nenhum versículo salvo para o sermão.");
+});
+$("backBooks").addEventListener("click",()=>showView("booksView"));
+$("backChapters").addEventListener("click",()=>openChapters(BOOKS.indexOf(selectedBook)));
+$("homeBtn").addEventListener("click",()=>showView("booksView"));
+$("prevChapter").addEventListener("click",()=>changeChapter(-1));
+$("nextChapter").addEventListener("click",()=>changeChapter(1));
+$("prevChapterBottom").addEventListener("click",()=>changeChapter(-1));
+$("nextChapterBottom").addEventListener("click",()=>changeChapter(1));
+
+$("menuBtn").addEventListener("click",()=>{
+  const saved=VERSIONS.filter(v=>isDownloaded(v.id)).map(v=>v.short);
+  $("cacheInfo").innerHTML=
+    (saved.length?`Versões baixadas neste dispositivo: ${saved.join(", ")}.`:"Nenhuma versão baixada para uso offline ainda.")+
+    `<br>Modo offline do site: ${swStatus}.`+
+    `<br><br>Para usar como aplicativo: no Chrome (Android), menu ⋮ → <b>Instalar app</b>; no iPhone (Safari), Compartilhar → <b>Adicionar à Tela de Início</b>.`;
+  $("readerMenu").classList.add("show");
+});
+$("closeMenu").addEventListener("click",()=>$("readerMenu").classList.remove("show"));
+$("readerMenu").addEventListener("click",e=>{if(e.target.id==="readerMenu")$("readerMenu").classList.remove("show")});
+$("clearHighlights").addEventListener("click",()=>{
+  const all=getMarks();delete all[cacheKey(selectedBook,selectedChapter)];save(STORAGE_MARKS,all);
+  const current=verses.querySelectorAll("mark.highlight");
+  current.forEach(m=>m.replaceWith(...m.childNodes));
+  $("readerMenu").classList.remove("show");
+});
+$("clearCache").addEventListener("click",async()=>{
+  if(confirm("Remover as versões baixadas deste dispositivo? Será preciso internet para abri-las de novo. Os destaques não serão apagados.")){
+    try{if("caches" in window)await caches.delete(CACHE_NAME);}catch{}
+    try{localStorage.removeItem(STORAGE_DOWNLOADED);}catch{}
+    Object.keys(versionData).forEach(k=>delete versionData[k]);
+    Object.keys(versionNorm).forEach(k=>delete versionNorm[k]);
+    $("cacheInfo").textContent="Versões removidas. Reabra o menu para ver o estado atual.";
+  }
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){
+    $("readerMenu").classList.remove("show");
+    $("versionPicker").classList.remove("show");
+    closeCompare();
+    hideSelectionTool();
+  }
+});
+
+/* ---------- Capítulo lido ---------- */
+
+document.querySelectorAll(".read-check").forEach(box=>box.addEventListener("change",()=>{
+  if(!selectedBook)return;
+  setRead(selectedBook,selectedChapter,box.checked);
+  updateReadToggle();   // mantém a caixa de cima e a de baixo iguais
+}));
+$("resetProgress").addEventListener("click",()=>{
+  if(confirm("Zerar todo o seu progresso de leitura neste aparelho? Isso não pode ser desfeito.")){
+    save(STORAGE_READ,{});
+    updateReadToggle();
+    renderProgress();
+    $("readerMenu").classList.remove("show");
+  }
+});
+
+/* ---------- Tema claro/escuro ---------- */
+
+function currentTheme(){return document.documentElement.getAttribute("data-theme")==="dark"?"dark":"light";}
+function applyTheme(theme,persist){
+  document.documentElement.setAttribute("data-theme",theme);
+  $("themeBtn").setAttribute("aria-label",theme==="dark"?"Mudar para o modo claro":"Mudar para o modo escuro");
+  if(persist)save(STORAGE_THEME,theme);
+}
+$("themeBtn").addEventListener("click",()=>applyTheme(currentTheme()==="dark"?"light":"dark",true));
+applyTheme(currentTheme(),false);
+// Enquanto a pessoa não escolher manualmente, acompanha o tema do aparelho.
+try{
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change",e=>{
+    const chosen=safeRead(STORAGE_THEME,null);
+    if(chosen!=="dark"&&chosen!=="light")applyTheme(e.matches?"dark":"light",false);
+  });
+}catch{}
+
+/* ---------- Tamanho da letra ---------- */
+
+const FONT_SIZES=[14,16,17,18,20,22,24,26,28,30];
+let fontSize=(()=>{
+  const saved=safeRead(STORAGE_FONT,null);
+  return FONT_SIZES.includes(saved)?saved:(window.innerWidth<=480?17:18);
+})();
+function applyFont(){
+  document.documentElement.style.setProperty("--verse-size",fontSize+"px");
+  const i=FONT_SIZES.indexOf(fontSize);
+  $("fontSizeLabel").textContent=fontSize;
+  $("fontMinus").disabled=i<=0;
+  $("fontPlus").disabled=i>=FONT_SIZES.length-1;
+}
+function stepFont(delta){
+  const i=FONT_SIZES.indexOf(fontSize);
+  fontSize=FONT_SIZES[Math.min(FONT_SIZES.length-1,Math.max(0,i+delta))];
+  save(STORAGE_FONT,fontSize);
+  applyFont();
+}
+$("fontMinus").addEventListener("click",()=>stepFont(-1));
+$("fontPlus").addEventListener("click",()=>stepFont(1));
+applyFont();
+
+/* ---------- Uso offline do site (service worker) ---------- */
+
+let swStatus="indisponível neste modo de abertura (precisa de https)";
+if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol)){
+  swStatus="ativando…";
+  navigator.serviceWorker.register("sw.js")
+    .then(()=>navigator.serviceWorker.ready)
+    .then(()=>{swStatus="ativo — o site abre sem internet";})
+    .catch(()=>{swStatus="não foi possível ativar";});
+  // Pede ao navegador para não apagar os dados salvos quando faltar espaço.
+  try{navigator.storage?.persist?.();}catch{}
+}
+
+checkStorageAvailable();
+updateVersionButton();
+renderBooks();
+renderProgress();
+</script>
+
+<script src="dados-geo.js"></script>
+<script src="dados-mapas.js"></script>
+<script src="dados-ligacoes.js"></script>
+<script src="arte.js"></script>
+<script src="recursos.js"></script>
+<script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+<script>
+  // Sem internet o script do VLibras não carrega; isso não pode afetar o resto do app.
+  try{if(window.VLibras)new window.VLibras.Widget("https://vlibras.gov.br/app");}catch{}
+</script>
+</body>
+</html>

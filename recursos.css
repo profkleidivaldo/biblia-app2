@@ -1,0 +1,164 @@
+/* Mapas, ilustrações e ligações entre textos */
+:root{
+  --map-sea:#cfe1e8;--map-sea2:#e2eef2;--map-land:#efe4c9;--map-coast:#a99366;--map-river:#7cadc2;
+  --map-label:#4a3b24;--map-halo:rgba(247,240,222,.9);--map-pin:#7a2f1b;--map-region:#7d6a45;
+  --ill-paper:#efe3c3;
+}
+:root[data-theme="dark"]{
+  --map-sea:#16232b;--map-sea2:#1d2f39;--map-land:#2e2c25;--map-coast:#5e5642;--map-river:#2f6177;
+  --map-label:#e4dac0;--map-halo:rgba(18,20,20,.88);--map-pin:#e0845f;--map-region:#a99b78;
+}
+.ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+
+/* ---------- abas da tela inicial ---------- */
+.hub-tabs{display:flex;gap:6px;margin:2px 0 14px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.hub-tabs::-webkit-scrollbar{display:none}
+.hub-tabs button{flex:1 0 auto;border:1px solid var(--line);background:var(--surface);color:var(--soft-ink);border-radius:999px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.hub-tabs button.active{background:var(--chip-on);color:#fff;border-color:var(--chip-on)}
+.hub-head{margin:0 0 12px}
+.hub-head h2{margin:0;font-size:20px}
+.hub-head p{margin:4px 0 0;font-size:13px;color:var(--muted)}
+
+/* ---------- cartões (mapas e galeria) ---------- */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.rc-card{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;text-align:left;width:100%;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;box-shadow:var(--shadow);color:var(--ink)}
+.rc-card:hover{border-color:var(--accent-line)}
+.rc-thumb{display:block;width:100%;aspect-ratio:16/10;background:var(--map-sea);overflow:hidden}
+.rc-thumb svg{display:block;width:100%;height:100%}
+.rc-card .rc-info{display:block;padding:10px 12px 12px}
+.rc-card strong{display:block;font-size:14px;line-height:1.3}
+.rc-card small{display:block;color:var(--muted);font-size:12px;margin-top:3px;line-height:1.4}
+.gal-section{margin:18px 0 8px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- ilustração dentro do texto ---------- */
+.verses figure.ill{margin:8px 0 12px;padding:0;position:relative;cursor:pointer;-webkit-user-select:none;user-select:none;border-radius:6px;overflow:hidden;background:var(--ill-paper);box-shadow:var(--shadow)}
+.verses figure.ill .ill-art{display:block;aspect-ratio:16/9;background:#2d1e13}
+.verses figure.ill svg{display:block;width:100%;height:100%}
+.verses figure.ill figcaption{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:8px 12px;font-family:var(--font-bible);font-size:13px;line-height:1.35;color:#3a2a1a;background:var(--ill-paper);border-top:1px solid rgba(60,40,20,.25)}
+.verses figure.ill figcaption span{font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6b5434;white-space:nowrap}
+.verses figure.ill:focus-visible{outline:3px solid var(--accent-line)}
+
+/* ---------- marcador de ligações no versículo ---------- */
+.verse .xr{float:right;display:inline-flex;align-items:center;gap:3px;margin:3px 0 0 8px;padding:2px 7px 2px 6px;border-radius:999px;border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--accent);font:700 11px/1.5 Arial,Helvetica,sans-serif;cursor:pointer;-webkit-user-select:none;user-select:none}
+.verse .xr .ico{width:12px;height:12px}
+.verse .xr:hover{filter:brightness(.96)}
+.verse .xr:focus-visible{outline:2px solid var(--accent)}
+
+/* ---------- barra de recursos do capítulo ---------- */
+.recursos-cap{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.recursos-cap:empty{display:none}
+.rc-chip{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:6px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--soft-ink);font-size:12px;font-weight:700;cursor:pointer}
+.rc-chip:hover{border-color:var(--accent-line);background:var(--accent-soft)}
+.rc-chip.alt{color:var(--accent)}
+
+/* ---------- folha de ligações ---------- */
+.lk-sheet,.il-sheet{position:fixed;inset:0;display:none;z-index:135;background:rgba(10,18,25,.5)}
+.lk-sheet{align-items:flex-end;justify-content:center}
+.lk-sheet.show{display:flex}
+.lk-panel{background:var(--surface);color:var(--ink);width:min(760px,100%);max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:14px 16px calc(20px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch}
+.lk-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;position:sticky;top:-14px;background:var(--surface);padding:6px 0;z-index:2}
+.lk-head h3{margin:0;font-size:17px;flex:1;line-height:1.3}
+.lk-btn{width:38px;height:38px;border-radius:10px;background:var(--soft);color:var(--ink);cursor:pointer;font-size:20px;line-height:1;flex:0 0 auto}
+.lk-btn[hidden]{display:none}
+.lk-desc{font-size:13px;color:var(--muted);margin:0 0 12px;line-height:1.5}
+.lk-badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--soft);color:var(--soft-ink)}
+.lk-badge.tema{background:var(--accent-soft);color:var(--accent)}
+.lk-badge.paralelo{background:#efe4ff;color:#5b3fa0}
+.lk-badge.profecia{background:#fff0d6;color:#9a5a10}
+:root[data-theme="dark"] .lk-badge.paralelo{background:#2c2542;color:#c5b2f2}
+:root[data-theme="dark"] .lk-badge.profecia{background:#3d2f17;color:#f0c27a}
+.lk-badge.role{background:transparent;border:1px solid var(--line);color:var(--muted);margin-left:6px}
+.lk-badge.aqui{background:var(--ok-soft);color:var(--ok-text);margin-left:6px}
+.lk-item{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--surface)}
+.lk-item.link{display:block;width:100%;text-align:left;cursor:pointer}
+.lk-item.link:hover{border-color:var(--accent-line)}
+.lk-item.here{border-color:var(--accent-line);background:var(--accent-soft)}
+.lk-item h4{margin:0;font-size:14px;line-height:1.35}
+.lk-item p{margin:6px 0 0;font-family:var(--font-bible);font-size:15.5px;line-height:1.65}
+.lk-item p sup{font-family:Arial,Helvetica,sans-serif;font-size:.62em;font-weight:800;color:var(--muted);margin-right:3px}
+.lk-item .mini{margin:2px 0 0;font:12px/1.4 Arial,Helvetica,sans-serif;color:var(--muted)}
+.lk-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.lk-actions button{border:1px solid var(--line);background:var(--soft);color:var(--soft-ink);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.lk-actions button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.lk-empty{color:var(--muted);font-size:14px;padding:10px 0}
+.lk-load{color:var(--muted);font-size:13px;margin:6px 0 0}
+.lk-more{color:var(--muted);font-size:12px;margin-top:4px}
+
+/* ---------- temas ---------- */
+.tm-filter{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+.tm-filter button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;color:var(--soft-ink);cursor:pointer}
+.tm-filter button.active{background:var(--chip-on);color:#fff;border-color:var(--chip-on)}
+.tm-search{width:100%;height:46px;padding:0 16px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);outline:none;margin:0 0 10px}
+.tm-search:focus{border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
+.tm-item{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:7px 0;cursor:pointer;color:var(--ink)}
+.tm-item:hover{border-color:var(--accent-line)}
+.tm-item strong{display:block;margin:5px 0 2px;font-size:14px;line-height:1.3}
+.tm-item small{display:block;color:var(--muted);font-size:12px;line-height:1.4}
+.tm-item .refs{margin-top:4px;font-size:11px;color:var(--muted)}
+
+/* ---------- tela do mapa ---------- */
+.map-wrap{position:relative;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--map-sea);box-shadow:var(--shadow)}
+.map-box{width:100%;height:clamp(320px,62vh,640px);touch-action:none;cursor:grab;position:relative}
+.map-box.drag{cursor:grabbing}
+.map-box svg{display:block;width:100%;height:100%;-webkit-user-select:none;user-select:none}
+.map-ctl{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px}
+.map-ctl button{width:40px;height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--line);color:var(--ink);font-size:20px;font-weight:700;cursor:pointer;box-shadow:var(--shadow);line-height:1}
+.map-hint{position:absolute;left:10px;bottom:8px;font-size:11px;color:var(--map-label);background:var(--map-halo);padding:2px 8px;border-radius:999px;pointer-events:none}
+.map-routes{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.map-routes button{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;color:var(--soft-ink);cursor:pointer}
+.map-routes button i{width:18px;height:0;border-top:3px solid currentColor;display:inline-block}
+.map-routes button i.sea{border-top-style:dashed}
+.map-routes button.off{opacity:.45;text-decoration:line-through}
+.map-card{margin:10px 0 0;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.map-card h3{margin:0 0 2px;font-size:16px}
+.map-card .kind{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.map-card p{margin:6px 0 0;font-size:14px;line-height:1.55}
+.map-card .lk-actions{margin-top:10px}
+.map-refs{margin:14px 0 0}
+.map-refs h4{margin:0 0 6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.map-refs .chips{display:flex;flex-wrap:wrap;gap:6px}
+.map-refs .chips button{border:1px solid var(--line);background:var(--soft);color:var(--soft-ink);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer}
+/* camadas do mapa (svg) */
+.m-sea{fill:var(--map-sea)}
+.m-ripple{fill:none;stroke:var(--map-sea2);stroke-width:9;stroke-linejoin:round;opacity:.9}
+.m-land{fill:var(--map-land);stroke:var(--map-coast);stroke-width:1;vector-effect:non-scaling-stroke;fill-rule:evenodd}
+.m-lake{fill:var(--map-sea);stroke:var(--map-coast);stroke-width:.8;vector-effect:non-scaling-stroke;fill-rule:evenodd}
+.m-river{fill:none;stroke:var(--map-river);stroke-width:1.6;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round}
+.m-halo{fill:none;stroke:var(--map-halo);stroke-width:5;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round}
+.m-rota{fill:none;stroke-width:2.6;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round}
+.m-rota.sea{stroke-dasharray:7 6}
+.m-fronteira{fill:none;stroke:var(--map-pin);stroke-width:1.6;stroke-dasharray:2 5;vector-effect:non-scaling-stroke;stroke-linecap:round;opacity:.8}
+.m-txt{font-family:Georgia,"Times New Roman",serif;font-size:11.5px;fill:var(--map-label);paint-order:stroke;stroke:var(--map-halo);stroke-width:3.2px;stroke-linejoin:round;pointer-events:none}
+.m-reg{font-family:Georgia,"Times New Roman",serif;font-size:10.5px;letter-spacing:.22em;fill:var(--map-region);opacity:.85;text-anchor:middle;paint-order:stroke;stroke:var(--map-halo);stroke-width:2.5px;pointer-events:none}
+.m-mar{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:11px;letter-spacing:.06em;fill:var(--map-river);text-anchor:middle;pointer-events:none;opacity:.95}
+.m-tribo{font-family:Georgia,"Times New Roman",serif;font-size:9px;letter-spacing:.14em;fill:var(--map-pin);text-anchor:middle;opacity:.8;paint-order:stroke;stroke:var(--map-halo);stroke-width:2.4px;pointer-events:none}
+.pl{cursor:pointer}
+.pl .dot{fill:var(--map-pin);stroke:var(--map-halo);stroke-width:1.6px}
+.pl .hit{fill:transparent}
+.pl.sel .dot{stroke:var(--accent);stroke-width:3px}
+.pl.sel .m-txt{font-weight:700}
+.arrow{fill:currentColor}
+
+/* ---------- lightbox da ilustração ---------- */
+.il-sheet{z-index:140;background:rgba(8,6,4,.88);align-items:center;justify-content:center;padding:12px;overflow:auto}
+.il-sheet.show{display:flex}
+.il-box{width:min(980px,100%);max-height:100%;display:flex;flex-direction:column;background:var(--ill-paper);color:#2d1e13;border-radius:10px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.il-art{display:block;width:100%;aspect-ratio:8/5;background:#2d1e13;max-height:62vh}
+.il-art svg{display:block;width:100%;height:100%}
+.il-info{padding:14px 18px 16px;overflow:auto}
+.il-info h3{margin:0;font-family:var(--font-bible);font-size:21px}
+.il-info .ref{font-size:12px;font-weight:700;color:#6b5434;margin:3px 0 8px;letter-spacing:.03em}
+.il-info p{margin:0;font-family:var(--font-bible);font-size:15.5px;line-height:1.65}
+.il-info .lk-actions button{background:rgba(60,40,20,.1);border-color:rgba(60,40,20,.25);color:#2d1e13}
+.il-info .lk-actions button.primary{background:#5b3a1c;color:#fff;border-color:#5b3a1c}
+.il-close{position:absolute;right:14px;top:12px;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:22px;cursor:pointer;z-index:2}
+
+.rc-toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:#222;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:170;max-width:90%;text-align:center}
+.rc-toast.show{opacity:1;transform:translateX(-50%)}
+@media(max-width:480px){
+  .il-info h3{font-size:18px}
+  .card-grid{grid-template-columns:1fr 1fr;gap:9px}
+  .rc-card .rc-info{padding:8px 10px 10px}
+  .rc-card[data-m] small{display:none}
+}
+@media print{.recursos-cap,.verse .xr{display:none!important}}
