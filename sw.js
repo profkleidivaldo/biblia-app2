@@ -3,7 +3,7 @@
    Os textos das versões (ACF/AA/NVI) são guardados pela página no Cache Storage
    (cache "biblia-versoes-v1"), que este arquivo não toca. */
 
-const SHELL = "biblia-shell-v3";
+const SHELL = "biblia-shell-v4";
 const ASSETS = [
   "./",
   "./index.html",
@@ -16,8 +16,12 @@ const ASSETS = [
   "./dados-geo.js",
   "./dados-mapas.js",
   "./dados-ligacoes.js",
-  "./arte.js"
+  "./arte.js",
+  "./imagens.css",
+  "./imagens.js",
+  "./imagens/manifest.json"
 ];
+const IMGS = "biblia-imagens-v1"; // imagens próprias: sobrevivem à troca de versão do shell
 
 self.addEventListener("install", event => {
   event.waitUntil(
@@ -45,6 +49,25 @@ self.addEventListener("fetch", event => {
   // Só cuida de arquivos do próprio site. Os JSON das versões e o VLibras
   // (outros domínios) seguem o caminho normal.
   if (url.origin !== self.location.origin) return;
+
+  // Imagens próprias: o manifest vem da rede primeiro (para enxergar novidades) e cai no
+  // guardado sem internet; as imagens têm nome único e são guardadas na primeira vez.
+  if (url.pathname.indexOf("/imagens/") !== -1) {
+    const isManifest = url.pathname.endsWith("/manifest.json");
+    event.respondWith(
+      caches.open(IMGS).then(cache => {
+        const net = () => fetch(req).then(res => {
+          if (res && res.ok) cache.put(req, res.clone());
+          return res;
+        });
+        if (isManifest) {
+          return net().catch(() => cache.match(req).then(h => h || caches.match("./imagens/manifest.json")));
+        }
+        return cache.match(req).then(hit => hit || net());
+      })
+    );
+    return;
+  }
 
   // Abrir o site: responde na hora com a página guardada e atualiza em segundo plano.
   if (req.mode === "navigate") {

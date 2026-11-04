@@ -24,6 +24,7 @@
 })();
 </script>
 <link rel="stylesheet" href="recursos.css">
+<link rel="stylesheet" href="imagens.css">
 <style>
 :root{
   color-scheme:light;
@@ -348,6 +349,7 @@ button{border:0;color:inherit}
     <button id="clearCache" type="button">Remover versões baixadas deste dispositivo</button><button id="showSermon" type="button">Ver versículos salvos para sermão</button>
     <button id="toggleIlus" type="button">Ilustrações no texto</button>
     <button id="toggleLigs" type="button">Marcadores de ligações</button>
+    <button id="manageImgs" type="button">Imagens próprias (protegido)</button>
     <div class="cache-list" id="cacheInfo"></div>
   </aside>
 </div>
@@ -374,6 +376,7 @@ button{border:0;color:inherit}
 <div id="selectionTool" class="selection-tool" role="toolbar" aria-label="Ações de destaque">
   <span class="sel-preview" id="selPreview"></span>
   <button type="button" id="selCancelBtn">Cancelar</button>
+  <button type="button" id="selImgBtn" title="Adicionar imagem ao texto (protegido por senha)">＋ Imagem</button>
   <button type="button" id="selToggleBtn">Destacar</button>
 </div>
 
@@ -1100,6 +1103,7 @@ renderProgress();
 <script src="dados-ligacoes.js"></script>
 <script src="arte.js"></script>
 <script src="recursos.js"></script>
+<script src="imagens.js"></script>
 <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
 <script>
   // Sem internet o script do VLibras não carrega; isso não pode afetar o resto do app.

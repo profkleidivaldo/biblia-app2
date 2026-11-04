@@ -7,10 +7,23 @@ App web (PWA) de leitura da Bíblia, offline, com destaques, progresso e compara
 - **Ilustrações** (aba *Ilustrações*): 29 cenas em estilo de gravura (sépia, sóbrias), geradas em SVG. Aparecem dentro do capítulo, no versículo da cena; toque para ampliar. Dá para desligar no menu ⋮.
 - **Ligações entre textos** (aba *Temas* e marcador 🔗 nos versículos): 139 grupos curados — temas, passagens paralelas (evangelhos, Reis/Crônicas…) e profecia/cumprimento. Mostra o texto na versão escolhida, abre a passagem e salva para sermão.
 
+- **Imagens próprias** (protegidas por senha): selecione um trecho e toque em **＋ Imagem** (ao lado de *Destacar*). A imagem entra antes do versículo escolhido, fica salva no aparelho e pode ser publicada no GitHub para aparecer em todos os aparelhos e funcionar offline. Gerenciar: menu ⋮ → *Imagens próprias*.
+
+## Imagens próprias — como funciona
+1. Envie também a pasta `imagens/` (com `imagens/manifest.json`) para o repositório.
+2. No menu ⋮ → *Imagens próprias* → *Conexão com o GitHub*: informe `usuario/repositorio` e um token.
+   - Crie em GitHub → Settings → Developer settings → *Fine-grained tokens*, acesso **somente a este repositório**, permissão **Contents: Read and write**.
+   - O token fica guardado só no aparelho (localStorage); nunca vai para o código.
+3. Ao adicionar uma imagem, ela é reduzida (máx. 1600 px, JPEG), salva no aparelho e (se marcado) enviada para `imagens/` + `imagens/manifest.json`. O site atualiza em ~1 minuto.
+4. Sem token: a imagem fica só no aparelho; use *Baixar pacote .zip*, descompacte na raiz do repositório e envie pelo GitHub.
+5. As imagens publicadas são baixadas e guardadas pelo service worker (cache `biblia-imagens-v1`) para abrir sem internet.
+
+**Sobre a senha:** ela só esconde os botões (o código guarda apenas o hash). Como o site é público, quem entende de programação pode contornar essa trava na própria tela dele, mas **não consegue alterar o repositório sem o token**. Por isso, nunca compartilhe o token.
+
 ## Publicar no GitHub Pages
 1. Envie **todos** os arquivos desta pasta para a raiz do repositório.
 2. *Settings → Pages → Deploy from a branch → main / (root)*.
-3. Abra `https://SEU-USUARIO.github.io/SEU-REPO/`. Ao atualizar, o service worker troca o cache (`biblia-shell-v3`).
+3. Abra `https://SEU-USUARIO.github.io/SEU-REPO/`. Ao atualizar, o service worker troca o cache (`biblia-shell-v4`).
 
 ## Estrutura
 | Arquivo | Função |
@@ -21,6 +34,8 @@ App web (PWA) de leitura da Bíblia, offline, com destaques, progresso e compara
 | `dados-geo.js` | costas, lagos e rios (gerado) |
 | `dados-ligacoes.js` | grupos de ligações |
 | `arte.js` | motor e cenas das ilustrações |
+| `imagens.js` / `imagens.css` | imagens próprias (senha, salvar, publicar) |
+| `imagens/manifest.json` | lista das imagens publicadas (+ os arquivos `img-*.jpg`) |
 | `tools/build_geo.py` | regenera `dados-geo.js` (precisa do Natural Earth 10m) |
 | `tools/validate.js` | confere se todas as referências existem nas 3 versões |
 
